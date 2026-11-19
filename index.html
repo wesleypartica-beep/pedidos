@@ -86,18 +86,18 @@ main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
 <script>
 'use strict';
 const ST = {
-  NFT: ['Parado · não faturado', 'var(--NFT)', 'var(--NFTb)'],
-  AGU: ['Parado · aguardando carregamento', 'var(--AGU)', 'var(--AGUb)'],
+  NFT: ['Aguardando roteirização', 'var(--NFT)', 'var(--NFTb)'],
+  AGU: ['Aguardando carregamento', 'var(--AGU)', 'var(--AGUb)'],
   SEP: ['Em separação', 'var(--SEP)', 'var(--SEPb)'],
   ROTA: ['Em rota de entrega', 'var(--FAT)', 'var(--FATb)'],
-  ACE: ['Pendente confirmação de entrega', 'var(--ACE)', 'var(--ACEb)'],
+  ACE: ['Em acerto', 'var(--ACE)', 'var(--ACEb)'],
   ENT: ['Entrega confirmada', 'var(--ENT)', 'var(--ENTb)'],
   DEV: ['Devolvido', 'var(--DEV)', 'var(--DEVb)']
 };
 ST.FAT = ST.ROTA; ST.DEVP = ST.ENT; // arquivos antigos
-const GROUPS = [['NFT', 'Parados · não faturados', 'Não faturados', ['NFT']], ['AGU', 'Parados · aguardando carregamento', 'Aguard. carregamento', ['AGU']],
-  ['SEP', 'Em separação', 'Em separação', ['SEP']], ['ROTA', 'Em rota de entrega', 'Em rota', ['ROTA', 'FAT']], ['ACE', 'Pendente confirmação de entrega', 'Pendente confirmação', ['ACE']],
-  ['ENT', 'Entrega confirmada', 'Entrega confirmada', ['ENT', 'DEVP']], ['DEV', 'Devolvidos · últimos 2 dias', 'Devolvidos', ['DEV']]];
+const GROUPS = [['NFT', 'Aguardando roteirização', 'Aguard. roteirização', ['NFT']], ['AGU', 'Aguardando carregamento', 'Aguard. carregamento', ['AGU']],
+  ['SEP', 'Em separação', 'Em separação', ['SEP']], ['ROTA', 'Em rota de entrega', 'Em rota', ['ROTA', 'FAT']], ['ACE', 'Em acerto', 'Em acerto', ['ACE']],
+  ['ENT', 'Entrega confirmada', 'Entrega confirmada', ['ENT', 'DEVP']], ['DEV', 'Devolvido', 'Devolvido', ['DEV']]];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const brl = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const qf = (q) => (q || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
