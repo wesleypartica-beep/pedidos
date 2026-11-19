@@ -50,17 +50,39 @@ main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
 .it .t{text-align:right;font-weight:600;white-space:nowrap;font-size:15px}
 .it .q{font-size:13px;color:var(--muted);font-weight:400}
 .tot{display:flex;justify-content:space-between;padding:12px 0 2px;border-top:2px solid var(--ink);font-weight:700;font-size:16px}
+.lg{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 18px;margin:18px 14px;max-width:420px}
+@media(min-width:460px){.lg{margin:28px auto}}
+.lg h2{margin:0 0 4px;font-size:20px}.lg p{margin:0 0 16px;color:var(--muted);font-size:15px}
+.lg label{display:block;font-size:14px;font-weight:600;margin-bottom:14px}
+.lg input:not([type=checkbox]){display:block;width:100%;margin-top:6px;font:inherit;font-size:20px;letter-spacing:.5px;padding:12px 14px;border:1px solid var(--line);border-radius:12px}
+.lg .rm{font-weight:400;display:flex;gap:8px;align-items:center}
+.lg .rm input{width:20px;height:20px}
+.lg button{width:100%;font:inherit;font-size:17px;font-weight:600;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#fff}
+.lg button:disabled{opacity:.6}
+.lg .err{color:var(--NFT);font-size:14px;margin-top:12px;min-height:18px}
+.out{background:none;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:9px;padding:6px 10px;font:inherit;font-size:13px;float:right;margin-top:2px}
 .empty{text-align:center;color:var(--muted);padding:40px 16px}
 .foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:20px}
 </style>
 </head>
 <body>
-<header><div class="b">Distribuidora Nova Geração</div><h1 id="vn">Meus pedidos</h1><div class="d" id="sub"></div></header>
+<header><button class="out hide" id="out">Sair</button><div class="b">Distribuidora Nova Geração</div><h1 id="vn">Meus pedidos</h1><div class="d" id="sub"></div></header>
 <div class="bar hide" id="bar">
   <input class="search" id="q" type="search" placeholder="Buscar cliente, cidade ou NF" autocomplete="off">
   <div class="chips" id="chips"></div>
 </div>
-<main id="main"><div class="empty">Carregando…</div></main>
+<main id="main"></main>
+<div id="login" class="hide">
+  <form class="lg" id="lgForm" autocomplete="on">
+    <h2>Consultar meus pedidos</h2>
+    <p>Informe seu código de vendedor e o CNPJ da empresa.</p>
+    <label>Código do vendedor<input id="lgCode" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="Ex.: 055" required></label>
+    <label>CNPJ da empresa<input id="lgCnpj" inputmode="numeric" placeholder="00.000.000/0000-00" maxlength="18" required></label>
+    <label class="rm"><input type="checkbox" id="lgRem" checked> Lembrar neste celular</label>
+    <button type="submit" id="lgBtn">Ver meus pedidos</button>
+    <div class="err" id="lgErr"></div>
+  </form>
+</div>
 <script>
 'use strict';
 const ST = {
@@ -87,7 +109,7 @@ function card(o, i) {
   return `<div class="card" data-i="${i}">
     <div class="ch"><div class="main">
       <div class="cn">${esc(tc(o.cn))}</div>
-      <div class="cl">${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
+      <div class="cl">${DATA.multi ? '<b>' + esc(o.u) + '</b> · ' : ''}${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
       <div class="tags">${tag(o.s)}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}</div>
     </div><div class="val"><div class="v">${brl(o.s === 'DEV' ? o.vd : o.vv)}</div><div class="ar">${o.it.length} itens ▾</div></div></div>
     <div class="body">
@@ -126,31 +148,68 @@ document.getElementById('q').addEventListener('input', (e) => { Q = e.target.val
 async function sha(txt) { return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt))); }
 const hex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
 function fail(msg) { document.getElementById('main').innerHTML = '<div class="empty">' + msg + '</div>'; }
-async function load() {
-  const tok = location.hash.replace(/^#/, '');
-  if (!/^[a-z0-9]{10,40}$/.test(tok)) return fail('Link incompleto. Abra o link que veio na mensagem.');
-  try {
-    const id = hex(await sha('id:' + tok)).slice(0, 20);
-    const r = await fetch('dados.json?' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) throw new Error('rede');
-    const all = await r.json();
-    const blob = all.d[id];
-    if (!blob) return fail('Este link expirou ou não é mais válido.<br>Os links são atualizados todos os dias — use o da mensagem mais recente.');
-    const raw = Uint8Array.from(atob(blob), (c) => c.charCodeAt(0));
-    const key = await crypto.subtle.importKey('raw', await sha('chave:' + tok), 'AES-GCM', false, ['decrypt']);
-    const gz = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
-    const txt = await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
-    const d = JSON.parse(txt);
-    DATA = d;
-    document.getElementById('vn').textContent = tc(d.vn);
-    document.getElementById('sub').textContent = d.un + ' · posição de ' + dayW(d.D);
-    document.title = 'Pedidos · ' + tc(d.vn);
-    document.getElementById('bar').classList.remove('hide');
-    render();
-  } catch (e) { fail('Não foi possível abrir os pedidos. Verifique a internet e tente de novo.'); }
+const SALT = 'nova-geracao-pedidos-v2';
+const LSK = 'ng.pedidos.login';
+const ls = { get() { try { return JSON.parse(localStorage.getItem(LSK) || 'null'); } catch (e) { return null; } }, set(v) { try { v ? localStorage.setItem(LSK, JSON.stringify(v)) : localStorage.removeItem(LSK); } catch (e) {} } };
+const show = (id, on) => document.getElementById(id).classList.toggle('hide', !on);
+let ALL = null;
+async function getAll() { if (ALL) return ALL; const r = await fetch('dados.json?' + Date.now(), { cache: 'no-store' }); if (!r.ok) throw new Error('rede'); ALL = await r.json(); return ALL; }
+async function open(cnpj, code) {
+  const login = cnpj + '|' + code;
+  const all = await getAll();
+  const id = hex(await sha('id|' + SALT + '|' + login)).slice(0, 24);
+  const blob = all.d[id];
+  if (!blob) return null;
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode('chave|' + login), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: new TextEncoder().encode(SALT), iterations: 150000, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+  const raw = Uint8Array.from(atob(blob), (c) => c.charCodeAt(0));
+  const gz = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
+  return JSON.parse(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
 }
-window.addEventListener('hashchange', load);
-load();
+function showData(d) {
+  DATA = d;
+  document.getElementById('vn').textContent = tc(d.vn);
+  document.getElementById('sub').textContent = d.un + ' · posição de ' + dayW(d.D);
+  document.title = 'Pedidos · ' + tc(d.vn);
+  show('login', false); show('bar', true); show('main', true); show('out', true);
+  render();
+}
+function showLogin(msg) {
+  DATA = null;
+  document.getElementById('vn').textContent = 'Meus pedidos';
+  document.getElementById('sub').textContent = '';
+  show('bar', false); show('main', false); show('out', false); show('login', true);
+  document.getElementById('lgErr').textContent = msg || '';
+}
+const digits = (s) => s.replace(/\D/g, '');
+document.getElementById('lgCnpj').addEventListener('input', (e) => {
+  const d = digits(e.target.value).slice(0, 14);
+  e.target.value = d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
+});
+document.getElementById('lgForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const code = digits(document.getElementById('lgCode').value).padStart(3, '0').slice(-3);
+  const cnpj = digits(document.getElementById('lgCnpj').value);
+  if (cnpj.length !== 14) return showLogin('CNPJ incompleto: são 14 números.');
+  const btn = document.getElementById('lgBtn'); btn.disabled = true; btn.textContent = 'Abrindo…';
+  try {
+    const d = await open(cnpj, code);
+    if (!d) { showLogin('Não encontramos pedidos para esse código e CNPJ. Confira os dados.'); }
+    else { ls.set(document.getElementById('lgRem').checked ? { cnpj, code } : null); showData(d); }
+  } catch (err) { showLogin('Não foi possível abrir agora. Verifique a internet e tente de novo.'); }
+  btn.disabled = false; btn.textContent = 'Ver meus pedidos';
+});
+document.getElementById('out').addEventListener('click', () => { ls.set(null); showLogin(''); });
+async function start() {
+  const s = ls.get();
+  if (s) {
+    document.getElementById('main').innerHTML = '<div class="empty">Carregando…</div>';
+    try { const d = await open(s.cnpj, s.code); if (d) return showData(d); } catch (e) {}
+  }
+  showLogin('');
+}
+start();
+
 </script>
 <style>.hide{display:none}</style>
 </body>
