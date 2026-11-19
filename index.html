@@ -89,17 +89,18 @@ const ST = {
   NFT: ['Aguardando faturamento', 'var(--NFT)', 'var(--NFTb)'],
   SEP: ['Em separação', 'var(--SEP)', 'var(--SEPb)'],
   FAT: ['Faturado · em entrega', 'var(--FAT)', 'var(--FATb)'],
-  ENT: ['Entregue', 'var(--ENT)', 'var(--ENTb)'],
-  DEVP: ['Devolução parcial', 'var(--DEV)', 'var(--DEVb)'],
+  ENT: ['Entrega confirmada', 'var(--ENT)', 'var(--ENTb)'],
+  DEVP: ['Entrega confirmada', 'var(--ENT)', 'var(--ENTb)'],
   DEV: ['Devolvido', 'var(--DEV)', 'var(--DEVb)']
 };
-const GROUPS = [['NFT', 'Aguardando faturamento', ['NFT']], ['FAT', 'Faturados / em entrega', ['SEP', 'FAT']], ['DEV', 'Devolvidos (72h)', ['DEV', 'DEVP']], ['ENT', 'Entregues', ['ENT']]];
+const GROUPS = [['NFT', 'Aguardando faturamento', ['NFT']], ['FAT', 'Faturados / em entrega', ['SEP', 'FAT']], ['DEV', 'Devolvidos (2 dias)', ['DEV']], ['ENT', 'Entrega confirmada', ['ENT', 'DEVP']]];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const brl = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const qf = (q) => (q || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
 const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
 const day = (n) => { if (!n) return '—'; const d = new Date(n * 864e5); return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
 const dayW = (n) => n ? WD[(n + 4) % 7] + ' ' + day(n) : '—';
+const fmtPed = (n) => { if (!n || !DATA) return day(n); const diff = DATA.D - n; if (diff === 0) return 'Hoje'; if (diff > 0 && diff <= 6) return tc(WD[(n + 4) % 7]); return day(n); };
 const tc = (s) => String(s || '').toLowerCase().replace(/(^|[\s/(])\S/g, (x) => x.toUpperCase());
 let DATA = null, F = 'all', Q = '';
 const tag = (s) => `<span class="tag" style="color:${ST[s][1]};background:${ST[s][2]}">${ST[s][0]}</span>`;
@@ -116,11 +117,13 @@ function card(o, i) {
       <div class="info">
         <div><div class="l">${pend ? 'Pedido' : 'Nota fiscal'}</div><div class="x">${esc(o.id)}</div></div>
         <div><div class="l">Condição</div><div class="x">${esc(o.to || '—')}</div></div>
-        <div><div class="l">Data do pedido</div><div class="x">${dayW(o.DP)}</div></div>
+        <div><div class="l">Data do pedido</div><div class="x">${fmtPed(o.DP)}</div></div>
         <div><div class="l">Faturamento</div><div class="x">${pend ? 'não faturado' : dayW(o.F)}</div></div>
       </div>
-      ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, NF ${esc(o.re.nf)} devolvida em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
-      ${o.vd ? `<div class="alert dv"><b>Devolução</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
+      ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, devolvido em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
+      ${o.s === 'DEV' ? `<div class="alert dv"><b>Devolvido</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
+      ${o.devp ? `<div class="alert dv"><b>Devolução parcial</b> em ${day(o.devp.dd)} · ${esc(tc(o.devp.mot) || 'sem motivo')} · ${brl(o.devp.v)}</div>` : ''}
+      ${o.s === 'ENT' && o.ent ? `<div class="alert" style="background:var(--ENTb);color:var(--ENT)">Carga encerrada em ${dayW(o.ent)}</div>` : ''}
       ${o.it.map(([n, q, v, qd, vd]) => `<div class="it"><div class="n">${esc(tc(n))}
           <div class="u">${q ? brl(v / q) + ' cada' : ''}</div>${qd ? `<div class="dvl">Devolvido: ${qf(qd)} · ${brl(vd)}</div>` : ''}</div>
         <div class="t">${brl(v)}<div class="q">${qf(q)} un.</div></div></div>`).join('')}
@@ -166,7 +169,20 @@ async function open(cnpj, code) {
   const gz = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
   return JSON.parse(await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text());
 }
+const HORA_INI = 8, HORA_FIM = 18;
+function agoraSP() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false }).formatToParts(new Date()).map((x) => [x.type, x.value]));
+  return { day: Date.UTC(+p.year, +p.month - 1, +p.day) / 864e5, hour: +p.hour % 24 };
+}
+function bloqueio(d) {
+  const a = agoraSP();
+  if (a.hour < HORA_INI || a.hour >= HORA_FIM) return `A consulta fica disponível das ${String(HORA_INI).padStart(2, '0')}:00 às ${HORA_FIM}:00.`;
+  if (d.D !== a.day) return 'A posição de hoje ainda não foi publicada. Tente novamente mais tarde.';
+  return '';
+}
 function showData(d) {
+  const b = bloqueio(d);
+  if (b) { showLogin(b); return; }
   DATA = d;
   document.getElementById('vn').textContent = tc(d.vn);
   document.getElementById('sub').textContent = d.un + ' · posição de ' + dayW(d.D);
