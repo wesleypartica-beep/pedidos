@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f2f3ef;--ink:#1b211f;--muted:#66706b;--line:#e1e4de;--accent:#0f5c4a;
-  --NFT:#b42318;--NFTb:#fdecea;--SEP:#6941c6;--SEPb:#f0ebfd;--FAT:#1a6fb5;--FATb:#e5f0fa;--ENT:#2e7d4f;--ENTb:#e3f2e8;--DEV:#5d6b78;--DEVb:#eceff2;--RE:#c11574;--REb:#fce7f3}
+  --NFT:#b42318;--NFTb:#fdecea;--SEP:#6941c6;--SEPb:#f0ebfd;--FAT:#1a6fb5;--FATb:#e5f0fa;--AGU:#b54708;--AGUb:#fef0e1;--ACE:#0e7490;--ACEb:#dff3f8;--ENT:#2e7d4f;--ENTb:#e3f2e8;--DEV:#5d6b78;--DEVb:#eceff2;--RE:#c11574;--REb:#fce7f3}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "IBM Plex Sans",system-ui,sans-serif;-webkit-text-size-adjust:100%}
 header{background:var(--accent);color:#fff;padding:16px 16px 14px}
@@ -86,14 +86,18 @@ main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
 <script>
 'use strict';
 const ST = {
-  NFT: ['Aguardando faturamento', 'var(--NFT)', 'var(--NFTb)'],
+  NFT: ['Parado · não faturado', 'var(--NFT)', 'var(--NFTb)'],
+  AGU: ['Parado · aguardando carregamento', 'var(--AGU)', 'var(--AGUb)'],
   SEP: ['Em separação', 'var(--SEP)', 'var(--SEPb)'],
-  FAT: ['Faturado · em entrega', 'var(--FAT)', 'var(--FATb)'],
+  ROTA: ['Em rota de entrega', 'var(--FAT)', 'var(--FATb)'],
+  ACE: ['Em acerto', 'var(--ACE)', 'var(--ACEb)'],
   ENT: ['Entrega confirmada', 'var(--ENT)', 'var(--ENTb)'],
-  DEVP: ['Entrega confirmada', 'var(--ENT)', 'var(--ENTb)'],
   DEV: ['Devolvido', 'var(--DEV)', 'var(--DEVb)']
 };
-const GROUPS = [['NFT', 'Aguardando faturamento', ['NFT']], ['FAT', 'Faturados / em entrega', ['SEP', 'FAT']], ['DEV', 'Devolvidos (2 dias)', ['DEV']], ['ENT', 'Entrega confirmada', ['ENT', 'DEVP']]];
+ST.FAT = ST.ROTA; ST.DEVP = ST.ENT; // arquivos antigos
+const GROUPS = [['NFT', 'Parados · não faturados', 'Não faturados', ['NFT']], ['AGU', 'Parados · aguardando carregamento', 'Aguard. carregamento', ['AGU']],
+  ['SEP', 'Em separação', 'Em separação', ['SEP']], ['ROTA', 'Em rota de entrega', 'Em rota', ['ROTA', 'FAT']], ['ACE', 'Em acerto', 'Em acerto', ['ACE']],
+  ['ENT', 'Entrega confirmada', 'Entrega confirmada', ['ENT', 'DEVP']], ['DEV', 'Devolvidos · últimos 2 dias', 'Devolvidos', ['DEV']]];
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const brl = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const qf = (q) => (q || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
@@ -107,6 +111,7 @@ const tag = (s) => `<span class="tag" style="color:${ST[s][1]};background:${ST[s
 function card(o, i) {
   const tq = o.it.reduce((t, x) => t + x[1], 0);
   const pend = o.s === 'NFT';
+  const parado = o.s === 'NFT' || o.s === 'AGU';
   return `<div class="card" data-i="${i}">
     <div class="ch"><div class="main">
       <div class="cn">${esc(tc(o.cn))}</div>
@@ -134,9 +139,9 @@ function render() {
   const os = DATA.o.map((o, i) => [o, i]).filter(([o]) => !Q || (o.cn + ' ' + o.cid + ' ' + o.bai + ' ' + o.id).toUpperCase().includes(Q));
   const cnt = (keys) => os.filter(([o]) => keys.includes(o.s)).length;
   document.getElementById('chips').innerHTML = `<button class="chip ${F === 'all' ? 'on' : ''}" data-f="all">Todos<b>${os.length}</b></button>` +
-    GROUPS.map(([k, l, keys]) => cnt(keys) ? `<button class="chip ${F === k ? 'on' : ''}" data-f="${k}">${l.split(' (')[0].split(' /')[0]}<b>${cnt(keys)}</b></button>` : '').join('');
+    GROUPS.map(([k, l, sl, keys]) => cnt(keys) ? `<button class="chip ${F === k ? 'on' : ''}" data-f="${k}">${sl}<b>${cnt(keys)}</b></button>` : '').join('');
   let h = '';
-  for (const [k, l, keys] of GROUPS) {
+  for (const [k, l, sl, keys] of GROUPS) {
     if (F !== 'all' && F !== k) continue;
     const list = os.filter(([o]) => keys.includes(o.s)).sort((a, b) => (b[0].dias - a[0].dias) || a[0].cn.localeCompare(b[0].cn));
     if (!list.length) continue;
