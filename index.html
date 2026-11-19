@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meus pedidos · Nova Geração</title>
+<meta name="robots" content="noindex,nofollow">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f3ef;--ink:#1b211f;--muted:#66706b;--line:#e1e4de;--accent:#0f5c4a;
+  --NFT:#b42318;--NFTb:#fdecea;--SEP:#6941c6;--SEPb:#f0ebfd;--FAT:#1a6fb5;--FATb:#e5f0fa;--ENT:#2e7d4f;--ENTb:#e3f2e8;--DEV:#5d6b78;--DEVb:#eceff2;--RE:#c11574;--REb:#fce7f3}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 "IBM Plex Sans",system-ui,sans-serif;-webkit-text-size-adjust:100%}
+header{background:var(--accent);color:#fff;padding:16px 16px 14px}
+header .b{font-size:12px;opacity:.8;letter-spacing:.4px;text-transform:uppercase}
+header h1{margin:3px 0 2px;font-size:21px;font-weight:600;line-height:1.2}
+header .d{font-size:14px;opacity:.9}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 12px 8px;border-bottom:1px solid var(--line)}
+.search{width:100%;font:inherit;font-size:16px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font:inherit;font-size:14px;font-weight:500;color:var(--ink)}
+.chip b{margin-left:4px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
+.sec{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:18px 4px 8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;overflow:hidden}
+.ch{display:flex;gap:12px;padding:14px;align-items:flex-start;cursor:pointer}
+.ch .main{flex:1;min-width:0}
+.cn{font-weight:600;font-size:16.5px;line-height:1.25}
+.cl{font-size:14px;color:var(--muted);margin-top:2px}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.tag{font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.val{text-align:right;flex:none}
+.val .v{font-weight:700;font-size:16px;white-space:nowrap}
+.val .ar{color:var(--muted);font-size:13px;margin-top:6px}
+.body{border-top:1px solid var(--line);padding:4px 14px 12px;display:none}
+.card.open .body{display:block}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;padding:10px 0 6px}
+.info .l{font-size:12px;color:var(--muted)}
+.info .x{font-weight:600;font-size:15px}
+.alert{font-size:14px;border-radius:10px;padding:9px 11px;margin:6px 0}
+.alert.re{background:var(--REb);color:var(--RE)}
+.alert.dv{background:var(--DEVb);color:var(--DEV)}
+.it{display:flex;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.it:first-of-type{border-top:none}
+.it .n{flex:1;min-width:0;font-size:15px;line-height:1.3}
+.it .u{font-size:13px;color:var(--muted);margin-top:2px}
+.it .dvl{font-size:13px;color:var(--NFT);margin-top:2px;font-weight:500}
+.it .t{text-align:right;font-weight:600;white-space:nowrap;font-size:15px}
+.it .q{font-size:13px;color:var(--muted);font-weight:400}
+.tot{display:flex;justify-content:space-between;padding:12px 0 2px;border-top:2px solid var(--ink);font-weight:700;font-size:16px}
+.empty{text-align:center;color:var(--muted);padding:40px 16px}
+.foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:20px}
+</style>
+</head>
+<body>
+<header><div class="b">Distribuidora Nova Geração</div><h1 id="vn">Meus pedidos</h1><div class="d" id="sub"></div></header>
+<div class="bar hide" id="bar">
+  <input class="search" id="q" type="search" placeholder="Buscar cliente, cidade ou NF" autocomplete="off">
+  <div class="chips" id="chips"></div>
+</div>
+<main id="main"><div class="empty">Carregando…</div></main>
+<script>
+'use strict';
+const ST = {
+  NFT: ['Aguardando faturamento', 'var(--NFT)', 'var(--NFTb)'],
+  SEP: ['Em separação', 'var(--SEP)', 'var(--SEPb)'],
+  FAT: ['Faturado · em entrega', 'var(--FAT)', 'var(--FATb)'],
+  ENT: ['Entregue', 'var(--ENT)', 'var(--ENTb)'],
+  DEVP: ['Devolução parcial', 'var(--DEV)', 'var(--DEVb)'],
+  DEV: ['Devolvido', 'var(--DEV)', 'var(--DEVb)']
+};
+const GROUPS = [['NFT', 'Aguardando faturamento', ['NFT']], ['FAT', 'Faturados / em entrega', ['SEP', 'FAT']], ['DEV', 'Devolvidos (72h)', ['DEV', 'DEVP']], ['ENT', 'Entregues', ['ENT']]];
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const brl = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const qf = (q) => (q || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const day = (n) => { if (!n) return '—'; const d = new Date(n * 864e5); return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
+const dayW = (n) => n ? WD[(n + 4) % 7] + ' ' + day(n) : '—';
+const tc = (s) => String(s || '').toLowerCase().replace(/(^|[\s/(])\S/g, (x) => x.toUpperCase());
+let DATA = null, F = 'all', Q = '';
+const tag = (s) => `<span class="tag" style="color:${ST[s][1]};background:${ST[s][2]}">${ST[s][0]}</span>`;
+function card(o, i) {
+  const tq = o.it.reduce((t, x) => t + x[1], 0);
+  const pend = o.s === 'NFT';
+  return `<div class="card" data-i="${i}">
+    <div class="ch"><div class="main">
+      <div class="cn">${esc(tc(o.cn))}</div>
+      <div class="cl">${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
+      <div class="tags">${tag(o.s)}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}</div>
+    </div><div class="val"><div class="v">${brl(o.s === 'DEV' ? o.vd : o.vv)}</div><div class="ar">${o.it.length} itens ▾</div></div></div>
+    <div class="body">
+      <div class="info">
+        <div><div class="l">${pend ? 'Pedido' : 'Nota fiscal'}</div><div class="x">${esc(o.id)}</div></div>
+        <div><div class="l">Condição</div><div class="x">${esc(o.to || '—')}</div></div>
+        <div><div class="l">Data do pedido</div><div class="x">${dayW(o.DP)}</div></div>
+        <div><div class="l">Faturamento</div><div class="x">${pend ? 'não faturado' : dayW(o.F)}</div></div>
+      </div>
+      ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, NF ${esc(o.re.nf)} devolvida em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
+      ${o.vd ? `<div class="alert dv"><b>Devolução</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
+      ${o.it.map(([n, q, v, qd, vd]) => `<div class="it"><div class="n">${esc(tc(n))}
+          <div class="u">${q ? brl(v / q) + ' cada' : ''}</div>${qd ? `<div class="dvl">Devolvido: ${qf(qd)} · ${brl(vd)}</div>` : ''}</div>
+        <div class="t">${brl(v)}<div class="q">${qf(q)} un.</div></div></div>`).join('')}
+      <div class="tot"><span>Total · ${qf(tq)} un.</span><span>${brl(o.vv)}</span></div>
+    </div></div>`;
+}
+function render() {
+  const os = DATA.o.map((o, i) => [o, i]).filter(([o]) => !Q || (o.cn + ' ' + o.cid + ' ' + o.bai + ' ' + o.id).toUpperCase().includes(Q));
+  const cnt = (keys) => os.filter(([o]) => keys.includes(o.s)).length;
+  document.getElementById('chips').innerHTML = `<button class="chip ${F === 'all' ? 'on' : ''}" data-f="all">Todos<b>${os.length}</b></button>` +
+    GROUPS.map(([k, l, keys]) => cnt(keys) ? `<button class="chip ${F === k ? 'on' : ''}" data-f="${k}">${l.split(' (')[0].split(' /')[0]}<b>${cnt(keys)}</b></button>` : '').join('');
+  let h = '';
+  for (const [k, l, keys] of GROUPS) {
+    if (F !== 'all' && F !== k) continue;
+    const list = os.filter(([o]) => keys.includes(o.s)).sort((a, b) => (b[0].dias - a[0].dias) || a[0].cn.localeCompare(b[0].cn));
+    if (!list.length) continue;
+    h += `<div class="sec">${l} · ${list.length}</div>` + list.map(([o, i]) => card(o, i)).join('');
+  }
+  document.getElementById('main').innerHTML = (h || '<div class="empty">Nenhum pedido encontrado.</div>') +
+    `<div class="foot">Posição de ${dayW(DATA.D)} · toque no cliente para ver os itens</div>`;
+}
+document.getElementById('main').addEventListener('click', (e) => { const h = e.target.closest('.ch'); if (h) h.parentElement.classList.toggle('open'); });
+document.getElementById('chips').addEventListener('click', (e) => { const c = e.target.closest('[data-f]'); if (c) { F = c.dataset.f; render(); } });
+document.getElementById('q').addEventListener('input', (e) => { Q = e.target.value.trim().toUpperCase(); render(); });
+async function sha(txt) { return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt))); }
+const hex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+function fail(msg) { document.getElementById('main').innerHTML = '<div class="empty">' + msg + '</div>'; }
+async function load() {
+  const tok = location.hash.replace(/^#/, '');
+  if (!/^[a-z0-9]{10,40}$/.test(tok)) return fail('Link incompleto. Abra o link que veio na mensagem.');
+  try {
+    const id = hex(await sha('id:' + tok)).slice(0, 20);
+    const r = await fetch('dados.json?' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error('rede');
+    const all = await r.json();
+    const blob = all.d[id];
+    if (!blob) return fail('Este link expirou ou não é mais válido.<br>Os links são atualizados todos os dias — use o da mensagem mais recente.');
+    const raw = Uint8Array.from(atob(blob), (c) => c.charCodeAt(0));
+    const key = await crypto.subtle.importKey('raw', await sha('chave:' + tok), 'AES-GCM', false, ['decrypt']);
+    const gz = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, key, raw.slice(12));
+    const txt = await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    const d = JSON.parse(txt);
+    DATA = d;
+    document.getElementById('vn').textContent = tc(d.vn);
+    document.getElementById('sub').textContent = d.un + ' · posição de ' + dayW(d.D);
+    document.title = 'Pedidos · ' + tc(d.vn);
+    document.getElementById('bar').classList.remove('hide');
+    render();
+  } catch (e) { fail('Não foi possível abrir os pedidos. Verifique a internet e tente de novo.'); }
+}
+window.addEventListener('hashchange', load);
+load();
+</script>
+<style>.hide{display:none}</style>
+</body>
+</html>
