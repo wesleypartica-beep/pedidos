@@ -115,6 +115,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const brl = (v) => 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const qf = (q) => (q || 0).toLocaleString('pt-BR', { maximumFractionDigits: 3 });
 const WD = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const rotaTxt = (o) => o.ra > 0 ? `Fora de rota, antecipado ${o.ra} dia${o.ra > 1 ? 's' : ''}` : `Fora de rota, ${-o.ra} dia${o.ra < -1 ? 's' : ''} após`;
 const WDN = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 const day = (n) => { if (!n) return '—'; const d = new Date(n * 864e5); return String(d.getUTCDate()).padStart(2, '0') + '/' + String(d.getUTCMonth() + 1).padStart(2, '0'); };
 const dayW = (n) => n ? WD[(n + 4) % 7] + ' ' + day(n) : '—';
@@ -130,7 +131,7 @@ const du = (n, open) => open ? (n ? `há ${n} dia${n > 1 ? 's' : ''} út${n > 1 
 function vida(o) {
   const D = DATA.D, sg = o.sg || 'B', S = [];
   const P = (k, t, when, info, f) => S.push(Object.assign({ k, t, when, info }, f || {}));
-  P('NFT', 'Pedido digitado', dayW(o.DP), o.rw != null ? (o.ra ? '<b>' + o.ra + ' dia' + (o.ra > 1 ? 's' : '') + ' antes da rota</b> (' + WDN[o.rw] + ')' : 'no dia da rota (' + WDN[o.rw] + ')') : '', { done: 1 });
+  P('NFT', 'Pedido digitado', dayW(o.DP), o.rw != null ? (o.ra ? '<b>' + rotaTxt(o) + '</b> · rota de ' + WDN[o.rw] : 'no dia da rota (' + WDN[o.rw] + ')') : '', { done: 1 });
   if (o.s === 'NFT' || !o.F) { P('NFT', 'Aguardando faturamento', 'agora', 'sem nota fiscal · ' + du(wd(o.DP, D, sg), 1), { cur: 1 }); }
   else {
     P('SEP', 'Faturado (nota emitida)', dayW(o.F), du(wd(o.DP, o.F, sg)) + ' desde o pedido', { done: 1 });
@@ -146,7 +147,7 @@ function vida(o) {
       if (o.s === 'ROTA' || o.s === 'FAT') P('FAT', 'Em rota de entrega', 'agora', o.tend ? 'viagem termina ' + dayW(o.tend) : '', { cur: 1 });
       if (o.s === 'ACE') P('ACE', 'Em acerto', 'agora', 'viagem terminou ' + dayW(o.tend) + ' · ' + du(wd(o.tend, D, sg), 1) + ' aguardando confirmação', { cur: 1 });
     }
-    if (o.s === 'ENT') P('ENT', 'Entrega confirmada', dayW(o.ent), '<b>Operação concluída em ' + du(wd(o.DP, o.ent, sg)) + '</b> (do pedido à entrega)', { done: 1 });
+    if (o.s === 'ENT') P('ENT', 'Entrega confirmada', dayW(o.ent), '<b>Tempo de entrega: ' + du(wd(o.DP, o.ent, sg)) + '</b> (do pedido à entrega)', { done: 1 });
     if (o.s === 'DEV') { P('DEV', 'Devolvido', dayW(o.dd), esc(tc(o.mot) || 'sem motivo'), { done: 1 });
       if (o.nv) P(o.nv.s === 'ROTA' ? 'FAT' : o.nv.s, 'Nova venda para entrega futura', dayW(o.nv.f || o.nv.dp), o.nv.sc + '% dos produtos e preços devolvidos · ' + brl(o.nv.vv) + ' · status: <b>' + (ST[o.nv.s] ? ST[o.nv.s][0] : o.nv.s) + (o.nv.s === 'ENT' && o.nv.ent ? ' ' + day(o.nv.ent) : '') + '</b>', { done: 1 }); }
   }
@@ -163,7 +164,7 @@ function card(o, i) {
     <div class="ch"><div class="main">
       <div class="cn">${esc(tc(o.cn))}</div>
       <div class="cl">${DATA.multi ? '<b>' + esc(o.u) + '</b> · ' : ''}${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
-      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${o.ra}d antes da rota (${WD[o.rw]})</span>` : ''}</div>
+      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${rotaTxt(o)}</span>` : ''}</div>
     </div><div class="val"><div class="v">${brl(o.s === 'DEV' ? o.vd : o.vv)}</div><div class="ar">${o.it.length} itens ▾</div></div></div>
     <div class="body">
       <div class="info">
@@ -177,7 +178,7 @@ function card(o, i) {
       ${o.s === 'DEV' ? `<div class="alert dv"><b>Devolvido</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
       ${o.s === 'DEV' && o.nv ? `<div class="alert" style="background:#eef3fb;color:#24456e"><b>Nova venda gerada para entrega futura</b> · ${o.nv.f ? 'faturada ' + day(o.nv.f) : 'pedido ' + day(o.nv.dp)} · ${ST[o.nv.s] ? ST[o.nv.s][0] : ''}</div>` : ''}
       ${o.devp ? `<div class="alert dv"><b>Devolução parcial</b> em ${day(o.devp.dd)} · ${esc(tc(o.devp.mot) || 'sem motivo')} · ${brl(o.devp.v)}</div>` : ''}
-      ${o.s === 'ENT' && o.ent ? `<div class="alert" style="background:var(--ENTb);color:var(--ENT)">Entrega confirmada em ${dayW(o.ent)} · operação em ${du(wd(o.DP, o.ent, o.sg || 'B'))}</div>` : ''}
+      ${o.s === 'ENT' && o.ent ? `<div class="alert" style="background:var(--ENTb);color:var(--ENT)">Entrega confirmada em ${dayW(o.ent)} · tempo de entrega: ${du(wd(o.DP, o.ent, o.sg || 'B'))}</div>` : ''}
       ${o.it.map(([n, q, v, qd, vd]) => `<div class="it"><div class="n">${esc(tc(n))}
           <div class="u">${q ? brl(v / q) + ' cada' : ''}</div>${qd ? `<div class="dvl">Devolvido: ${qf(qd)} · ${brl(vd)}</div>` : ''}</div>
         <div class="t">${brl(v)}<div class="q">${qf(q)} un.</div></div></div>`).join('')}
