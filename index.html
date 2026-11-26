@@ -175,6 +175,7 @@ function card(o, i) {
         <div><div class="l">Data do pedido</div><div class="x">${fmtPed(o.DP)}</div></div>
         <div><div class="l">Faturamento</div><div class="x">${pend ? 'não faturado' : dayW(o.F)}</div></div>
       </div>
+      ${o.s === 'ROTA' && String(o.tel || '').length >= 10 ? `<a class="wab" target="_blank" rel="noopener" href="https://wa.me/55${o.tel}?text=${encodeURIComponent(rotaMsg(o))}">Avisar cliente que saiu para entrega</a>` : ''}
       ${vida(o)}
       ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, devolvido em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
       ${o.s === 'DEV' ? `<div class="alert dv"><b>Devolvido</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
@@ -192,6 +193,9 @@ const atCor = (n) => n > 60 ? '#6e130d' : n > 30 ? '#c8241a' : n > 15 ? '#dd5b50
 function cobMsg(c) {
   const lin = c.t.filter((t) => t[5] > 0).slice(0, 12).map((t) => `• NF ${t[0]}${t[1] && t[1] !== '01' ? '/' + t[1] : ''} – venc. ${day(t[2])} – ${brl(t[3])}`).join('\n');
   return `Olá, ${tc(c.cn.replace(/^\d+\s*·\s*/, ''))}! Tudo bem?\nConsta em aberto em nosso sistema:\n${lin}\nTotal vencido: ${brl(c.venc)}\nPosso te enviar a 2ª via do boleto ou o PIX para pagamento?`;
+}
+function rotaMsg(o) {
+  return `Olá, ${tc(String(o.cn).replace(/^\d+\s*·\s*/, ''))}! Tudo bem?\nSeu pedido de ${dayW(o.DP)} (NF ${o.id}) no valor de ${brl(o.vv)} saiu para entrega${o.exp ? ' ' + (o.exp === DATA.D ? 'hoje' : dayW(o.exp)) : ''}${o.tend ? ' e deve chegar até ' + dayW(o.tend) : ''}.\nQualquer dúvida, estou à disposição.`;
 }
 function cobCard(c, i) {
   const tel = (c.tel || '').replace(/\D/g, '');
