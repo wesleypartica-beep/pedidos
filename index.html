@@ -149,7 +149,7 @@ function vida(o) {
     }
     if (o.s === 'ENT') P('ENT', 'Entrega confirmada', dayW(o.ent), '<b>Tempo de entrega: ' + du(wd(o.DP, o.ent, sg)) + '</b> (do pedido à entrega)', { done: 1 });
     if (o.s === 'DEV') { P('DEV', 'Devolvido', dayW(o.dd), esc(tc(o.mot) || 'sem motivo'), { done: 1 });
-      if (o.nv) P(o.nv.s === 'ROTA' ? 'FAT' : o.nv.s, 'Nova venda para entrega futura', dayW(o.nv.f || o.nv.dp), o.nv.sc + '% dos produtos e preços devolvidos · ' + brl(o.nv.vv) + ' · status: <b>' + (ST[o.nv.s] ? ST[o.nv.s][0] : o.nv.s) + (o.nv.s === 'ENT' && o.nv.ent ? ' ' + day(o.nv.ent) : '') + '</b>', { done: 1 }); }
+      if (o.nv) P(o.nv.s === 'ROTA' ? 'FAT' : o.nv.s, 'Gerado nova venda', dayW(o.nv.f || o.nv.dp), o.nv.sc + '% dos produtos e preços devolvidos · ' + brl(o.nv.vv) + ' · status: <b>' + (ST[o.nv.s] ? ST[o.nv.s][0] : o.nv.s) + (o.nv.s === 'ENT' && o.nv.ent ? ' ' + day(o.nv.ent) : '') + '</b>', { done: 1 }); }
   }
   const cur = (S.find((x) => x.cur) || {}).k;
   const NX = { NFT: ['Faturamento', 'Saída para entrega', 'Entrega confirmada'], SEP: ['Saída para entrega', 'Entrega confirmada'], AGU: ['Saída para entrega', 'Entrega confirmada'], FAT: ['Entrega confirmada'], ACE: ['Entrega confirmada'] };
@@ -164,7 +164,7 @@ function card(o, i) {
     <div class="ch"><div class="main">
       <div class="cn">${esc(tc(o.cn))}</div>
       <div class="cl">${DATA.multi ? '<b>' + esc(o.u) + '</b> · ' : ''}${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
-      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${rotaTxt(o)}</span>` : ''}</div>
+      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Gerado nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${rotaTxt(o)}</span>` : ''}</div>
     </div><div class="val"><div class="v">${brl(o.s === 'DEV' ? o.vd : o.vv)}</div><div class="ar">${o.it.length} itens ▾</div></div></div>
     <div class="body">
       <div class="info">
@@ -176,7 +176,7 @@ function card(o, i) {
       ${vida(o)}
       ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, devolvido em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
       ${o.s === 'DEV' ? `<div class="alert dv"><b>Devolvido</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
-      ${o.s === 'DEV' && o.nv ? `<div class="alert" style="background:#eef3fb;color:#24456e"><b>Nova venda gerada para entrega futura</b> · ${o.nv.f ? 'faturada ' + day(o.nv.f) : 'pedido ' + day(o.nv.dp)} · ${ST[o.nv.s] ? ST[o.nv.s][0] : ''}</div>` : ''}
+      ${o.s === 'DEV' && o.nv ? `<div class="alert" style="background:#eef3fb;color:#24456e"><b>Gerado nova venda</b> · ${o.nv.f ? 'faturada ' + day(o.nv.f) : 'pedido ' + day(o.nv.dp)} · ${ST[o.nv.s] ? ST[o.nv.s][0] : ''}</div>` : ''}
       ${o.devp ? `<div class="alert dv"><b>Devolução parcial</b> em ${day(o.devp.dd)} · ${esc(tc(o.devp.mot) || 'sem motivo')} · ${brl(o.devp.v)}</div>` : ''}
       ${o.s === 'ENT' && o.ent ? `<div class="alert" style="background:var(--ENTb);color:var(--ENT)">Entrega confirmada em ${dayW(o.ent)} · tempo de entrega: ${du(wd(o.DP, o.ent, o.sg || 'B'))}</div>` : ''}
       ${o.it.map(([n, q, v, qd, vd]) => `<div class="it"><div class="n">${esc(tc(n))}
