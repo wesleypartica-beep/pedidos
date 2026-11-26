@@ -74,6 +74,7 @@ main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
 .lg .err{color:var(--NFT);font-size:14px;margin-top:12px;min-height:18px}
 .out{background:#fff;border:1px solid var(--line);color:var(--p);border-radius:9px;padding:7px 12px;font:inherit;font-size:13.5px;font-weight:600}
 .sum{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0 4px}.sum .k{display:flex;justify-content:space-between;align-items:baseline}.sum .k b{font-size:24px;color:var(--p)}.sum .k span{color:var(--muted);font-size:14px}.sum .bar2{display:flex;height:8px;border-radius:5px;overflow:hidden;gap:2px;margin-top:10px;background:#eef0f3}.sum .bar2 i{display:block}.sum .lg2{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12.5px;color:var(--muted)}.sum .lg2 i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.mkc{display:block;width:100%;margin-top:8px;padding:11px;border-radius:12px;border:1px solid var(--line);background:#fff;font:inherit;font-size:15px;font-weight:600;color:var(--ink)}
 .cobb{display:flex;justify-content:space-between;align-items:center;width:100%;margin:12px 0 0;padding:12px 14px;border:0;border-radius:14px;background:#fde8e6;color:#9c1b13;font:inherit;font-size:15px;text-align:left}.cobb b{font-size:18px}
 .wab{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:12px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
 .empty{text-align:center;color:var(--muted);padding:40px 16px}
@@ -175,7 +176,7 @@ function card(o, i) {
         <div><div class="l">Data do pedido</div><div class="x">${fmtPed(o.DP)}</div></div>
         <div><div class="l">Faturamento</div><div class="x">${pend ? 'não faturado' : dayW(o.F)}</div></div>
       </div>
-      ${o.s === 'ROTA' && String(o.tel || '').length >= 10 ? `<a class="wab" target="_blank" rel="noopener" href="https://wa.me/55${o.tel}?text=${encodeURIComponent(rotaMsg(o))}">Avisar cliente que saiu para entrega</a>` : ''}
+      ${o.s === 'ROTA' ? (String(o.tel || '').length >= 10 ? `<a class="wab" target="_blank" rel="noopener" href="https://wa.me/55${o.tel}?text=${encodeURIComponent(rotaMsg(o))}">Avisar cliente que saiu para entrega</a>${String(o.tel).length === 10 ? '<div class="cl" style="text-align:center;margin-top:4px">Telefone fixo no cadastro: pode não ter WhatsApp</div>' : ''}` : '<div class="cl" style="margin-top:8px">Cliente sem celular válido no cadastro.</div>') : ''}
       ${vida(o)}
       ${o.re ? `<div class="alert re"><b>Reentrega</b> · pedido original ${day(o.re.dp)}, devolvido em ${day(o.re.dd)} (${esc(tc(o.re.mot))})</div>` : ''}
       ${o.s === 'DEV' ? `<div class="alert dv"><b>Devolvido</b> em ${day(o.dd)} · ${esc(tc(o.mot) || 'sem motivo')} · ${brl(o.vd)}</div>` : ''}
@@ -189,6 +190,15 @@ function card(o, i) {
     </div></div>`;
 }
 
+
+const hojeSP = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+const COB = {
+  key: () => 'ng.cob.' + (DATA && DATA.vn || '') + '.' + hojeSP(),
+  all() { try { return JSON.parse(localStorage.getItem(this.key()) || '{}'); } catch (e) { return {}; } },
+  has(c) { return !!this.all()[c.cc]; },
+  set(c, on) { const a = this.all(); if (on) a[c.cc] = Date.now(); else delete a[c.cc]; try { localStorage.setItem(this.key(), JSON.stringify(a)); } catch (e) {} },
+};
+const OPENC = new Set();
 const atCor = (n) => n > 60 ? '#6e130d' : n > 30 ? '#c8241a' : n > 15 ? '#dd5b50' : '#ea8a82';
 function cobMsg(c) {
   const lin = c.t.filter((t) => t[5] > 0).slice(0, 12).map((t) => `• NF ${t[0]}${t[1] && t[1] !== '01' ? '/' + t[1] : ''} – venc. ${day(t[2])} – ${brl(t[3])}`).join('\n');
@@ -199,14 +209,15 @@ function rotaMsg(o) {
 }
 function cobCard(c, i) {
   const tel = (c.tel || '').replace(/\D/g, '');
-  return `<div class="card" style="--sc:${c.venc ? atCor(c.at) : 'var(--line)'}">
+  return `<div class="card ${OPENC.has(c.cc) ? 'open' : ''}" data-cc="${esc(c.cc)}" style="--sc:${c.venc ? atCor(c.at) : 'var(--line)'}">
     <div class="ch"><div class="main"><div class="cn">${esc(tc(c.cn))}</div><div class="cl">${esc(c.cid || '')}</div>
-      <div class="tags">${c.venc ? `<span class="tag" style="color:#fff;background:${atCor(c.at)}">${c.at} dias de atraso</span>` : `<span class="tag" style="color:#0e7c86;background:#e0f2f3">vence ${dayW(c.prox)}</span>`}${(c.fl || []).map((f) => `<span class="tag" style="color:#9c1b13;background:#fde8e6">${esc(f)}</span>`).join('')}</div></div>
+      <div class="tags">${COB.has(c) ? '<span class="tag" style="color:#0f8a3c;background:#e2f3e8">✓ Cobrado hoje</span>' : ''}${c.venc ? `<span class="tag" style="color:#fff;background:${atCor(c.at)}">${c.at} dias de atraso</span>` : `<span class="tag" style="color:#0e7c86;background:#e0f2f3">vence ${dayW(c.prox)}</span>`}${(c.fl || []).map((f) => `<span class="tag" style="color:#9c1b13;background:#fde8e6">${esc(f)}</span>`).join('')}</div></div>
       <div class="val"><div class="v" style="color:${c.venc ? '#c8241a' : 'inherit'}">${brl(c.venc || c.ab)}</div><div class="ar">${c.t.length} título${c.t.length > 1 ? 's' : ''} ▾</div></div></div>
     <div class="body">
       ${c.t.map(([nf, pa, ve, v, fo, at]) => `<div class="it"><div class="n">NF ${esc(nf)}${pa ? ' / ' + esc(pa) : ''}<div class="u">venc. ${dayW(ve)} · ${esc(fo)}</div>${at ? `<div class="dvl">${at} dias de atraso</div>` : ''}</div><div class="t">${brl(v)}</div></div>`).join('')}
       <div class="tot"><span>Vencido</span><span>${brl(c.venc)}</span></div>
-      ${tel.length >= 10 ? `<a class="wab" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(cobMsg(c))}">Cobrar pelo WhatsApp</a>` : ''}
+      ${tel.length >= 10 ? `<a class="wab" data-cob="${esc(c.cc)}" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(cobMsg(c))}">Cobrar pelo WhatsApp</a>` : '<div class="cl" style="margin-top:8px">Cliente sem celular válido no cadastro.</div>'}
+      ${c.venc ? `<button class="mkc" data-mk="${esc(c.cc)}">${COB.has(c) ? '✓ Cobrado hoje · desmarcar' : 'Marcar como cobrado'}</button>` : ''}
     </div></div>`;
 }
 function render() {
@@ -219,7 +230,9 @@ function render() {
     GROUPS.map(([k, l, sl, keys]) => cnt(keys) ? `<button class="chip ${F === k ? 'on' : ''}" data-f="${k}">${sl}<b>${cnt(keys)}</b></button>` : '').join('');
   if (F === 'COB') {
     const vt = titV.reduce((t, c) => t + c.venc, 0);
+    const feitos = titV.filter((c) => COB.has(c)), vf = feitos.reduce((t, c) => t + c.venc, 0);
     document.getElementById('main').innerHTML = `<div class="sum"><div class="k"><b style="color:#c8241a">${brl(vt)}</b><span>vencido · ${titV.length} cliente${titV.length > 1 ? 's' : ''}</span></div><div class="lg2" style="margin-top:6px">Contas a receber de ${dayW(DATA.tD || DATA.D)}. Toque no cliente para ver os títulos e cobrar.</div></div>` +
+      `<div class="sum"><div class="k"><b style="color:#0f8a3c">${feitos.length}</b><span>${feitos.length ? 'cobrado' + (feitos.length > 1 ? 's' : '') + ' hoje · ' + brl(vf) : 'nenhum cobrado hoje ainda'}</span></div><div class="bar2"><i style="flex:${feitos.length};background:#0f8a3c"></i><i style="flex:${titV.length - feitos.length};background:#f3c3bf"></i></div><div class="lg2"><span><b>${titV.length - feitos.length}</b> faltam cobrar · ${brl(vt - vf)}</span></div></div>` +
       `<div class="sec">Títulos vencidos · ${titV.length}</div>` + titV.map(cobCard).join('') +
       (tit.length > titV.length ? `<div class="sec">Vencem nos próximos 7 dias · ${tit.length - titV.length}</div>` + tit.filter((c) => !c.venc).map(cobCard).join('') : '') +
       `<div class="foot">Posição do contas a receber de ${dayW(DATA.tD || DATA.D)}</div>`;
@@ -227,7 +240,7 @@ function render() {
   }
   const tv = os.reduce((t, [o]) => t + (o.s === 'DEV' ? 0 : o.vv), 0);
   const seg = GROUPS.map(([k, l, sl, keys]) => [k, sl, cnt(keys), ST[keys[0]]]).filter((x) => x[2]);
-  let h = (F === 'all' && titV.length ? `<button class="cobb" data-f="COB"><span><b>${titV.length}</b> cliente${titV.length > 1 ? 's' : ''} para cobrar</span><span>${brl(titV.reduce((t, c) => t + c.venc, 0))} vencido ›</span></button>` : '') + `<div class="sum"><div class="k"><b>${os.length}</b><span>pedidos · ${brl(tv)}</span></div><div class="bar2">${seg.map(([k, sl, n, st]) => `<i style="flex:${n};background:${st[3] || st[1]}"></i>`).join('')}</div><div class="lg2">${seg.map(([k, sl, n, st]) => `<span><i style="background:${st[3] || st[1]}"></i>${sl} ${n}</span>`).join('')}</div></div>`;
+  let h = (F === 'all' && titV.length ? `<button class="cobb" data-f="COB"><span><b>${titV.length - titV.filter((c) => COB.has(c)).length}</b> de ${titV.length} cliente${titV.length > 1 ? 's' : ''} para cobrar</span><span>${brl(titV.reduce((t, c) => t + c.venc, 0))} vencido ›</span></button>` : '') + `<div class="sum"><div class="k"><b>${os.length}</b><span>pedidos · ${brl(tv)}</span></div><div class="bar2">${seg.map(([k, sl, n, st]) => `<i style="flex:${n};background:${st[3] || st[1]}"></i>`).join('')}</div><div class="lg2">${seg.map(([k, sl, n, st]) => `<span><i style="background:${st[3] || st[1]}"></i>${sl} ${n}</span>`).join('')}</div></div>`;
   for (const [k, l, sl, keys] of GROUPS) {
     if (F !== 'all' && F !== k) continue;
     const list = os.filter(([o]) => keys.includes(o.s)).sort((a, b) => (b[0].dias - a[0].dias) || a[0].cn.localeCompare(b[0].cn));
@@ -237,7 +250,10 @@ function render() {
   document.getElementById('main').innerHTML = (h || '<div class="empty">Nenhum pedido encontrado.</div>') +
     `<div class="foot">Posição de ${dayW(DATA.D)} · toque no cliente para ver os itens</div>`;
 }
-document.getElementById('main').addEventListener('click', (e) => { const b = e.target.closest('.cobb'); if (b) { F = 'COB'; render(); window.scrollTo(0, 0); return; } const h = e.target.closest('.ch'); if (h) h.parentElement.classList.toggle('open'); });
+document.getElementById('main').addEventListener('click', (e) => {
+  const w = e.target.closest('[data-cob]'); if (w) { const c = (DATA.tit || []).find((x) => x.cc === w.dataset.cob); if (c) { COB.set(c, true); setTimeout(render, 300); } return; }
+  const m = e.target.closest('[data-mk]'); if (m) { const c = (DATA.tit || []).find((x) => x.cc === m.dataset.mk); if (c) { COB.set(c, !COB.has(c)); render(); } return; }
+  const b = e.target.closest('.cobb'); if (b) { F = 'COB'; render(); window.scrollTo(0, 0); return; } const h = e.target.closest('.ch'); if (h) { const cd = h.parentElement; cd.classList.toggle('open'); if (cd.dataset.cc) cd.classList.contains('open') ? OPENC.add(cd.dataset.cc) : OPENC.delete(cd.dataset.cc); } });
 document.getElementById('chips').addEventListener('click', (e) => { const c = e.target.closest('[data-f]'); if (c) { F = c.dataset.f; render(); } });
 document.getElementById('q').addEventListener('input', (e) => { Q = e.target.value.trim().toUpperCase(); render(); });
 async function sha(txt) { return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt))); }
