@@ -74,6 +74,8 @@ main{padding:10px 12px 40px;max-width:640px;margin:0 auto}
 .lg .err{color:var(--NFT);font-size:14px;margin-top:12px;min-height:18px}
 .out{background:#fff;border:1px solid var(--line);color:var(--p);border-radius:9px;padding:7px 12px;font:inherit;font-size:13.5px;font-weight:600}
 .sum{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0 4px}.sum .k{display:flex;justify-content:space-between;align-items:baseline}.sum .k b{font-size:24px;color:var(--p)}.sum .k span{color:var(--muted);font-size:14px}.sum .bar2{display:flex;height:8px;border-radius:5px;overflow:hidden;gap:2px;margin-top:10px;background:#eef0f3}.sum .bar2 i{display:block}.sum .lg2{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:12.5px;color:var(--muted)}.sum .lg2 i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.cobb{display:flex;justify-content:space-between;align-items:center;width:100%;margin:12px 0 0;padding:12px 14px;border:0;border-radius:14px;background:#fde8e6;color:#9c1b13;font:inherit;font-size:15px;text-align:left}.cobb b{font-size:18px}
+.wab{display:block;text-align:center;margin-top:12px;padding:12px;border-radius:12px;background:#1f9d55;color:#fff;font-weight:600;text-decoration:none}
 .empty{text-align:center;color:var(--muted);padding:40px 16px}
 .foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:20px}
 </style>
@@ -149,7 +151,7 @@ function vida(o) {
     }
     if (o.s === 'ENT') P('ENT', 'Entrega confirmada', dayW(o.ent), '<b>Tempo de entrega: ' + du(wd(o.DP, o.ent, sg)) + '</b> (do pedido à entrega)', { done: 1 });
     if (o.s === 'DEV') { P('DEV', 'Devolvido', dayW(o.dd), esc(tc(o.mot) || 'sem motivo'), { done: 1 });
-      if (o.nv) P(o.nv.s === 'ROTA' ? 'FAT' : o.nv.s, 'Gerado nova venda', dayW(o.nv.f || o.nv.dp), o.nv.sc + '% dos produtos e preços devolvidos · ' + brl(o.nv.vv) + ' · status: <b>' + (ST[o.nv.s] ? ST[o.nv.s][0] : o.nv.s) + (o.nv.s === 'ENT' && o.nv.ent ? ' ' + day(o.nv.ent) : '') + '</b>', { done: 1 }); }
+      if (o.nv) P(o.nv.s === 'ROTA' ? 'FAT' : o.nv.s, 'Gerado nova venda', dayW(o.nv.f || o.nv.dp), brl(o.nv.vv) + ' · status: <b>' + (ST[o.nv.s] ? ST[o.nv.s][0] : o.nv.s) + (o.nv.s === 'ENT' && o.nv.ent ? ' ' + day(o.nv.ent) : '') + '</b>', { done: 1 }); }
   }
   const cur = (S.find((x) => x.cur) || {}).k;
   const NX = { NFT: ['Faturamento', 'Saída para entrega', 'Entrega confirmada'], SEP: ['Saída para entrega', 'Entrega confirmada'], AGU: ['Saída para entrega', 'Entrega confirmada'], FAT: ['Entrega confirmada'], ACE: ['Entrega confirmada'] };
@@ -164,7 +166,7 @@ function card(o, i) {
     <div class="ch"><div class="main">
       <div class="cn">${esc(tc(o.cn))}</div>
       <div class="cl">${DATA.multi ? '<b>' + esc(o.u) + '</b> · ' : ''}${esc(tc(o.cid))}${o.bai ? ' · ' + esc(tc(o.bai)) : ''}</div>
-      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Gerado nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra && !o.re ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${rotaTxt(o)}</span>` : ''}</div>
+      <div class="tags">${tag(o.s)}${o.s === 'DEV' && o.nv ? '<span class="tag" style="color:#24456e;background:#eef3fb">Gerado nova venda · ' + (ST[o.nv.s] ? ST[o.nv.s][0] : '') + '</span>' : ''}${o.re ? '<span class="tag" style="color:var(--RE);background:var(--REb)">Reentrega</span>' : ''}${o.tv ? `<span class="tag" style="color:#9c1b13;background:#fde8e6">Título vencido ${brl(o.tv)}</span>` : ''}${o.dias ? `<span class="tag" style="color:var(--NFT);background:#fff;border:1px solid var(--NFTb)">parado ${o.dias}d</span>` : ''}${(o.s === 'NFT' || o.s === 'SEP' || o.s === 'AGU') && o.rw != null && o.ra && !o.re ? `<span class="tag" style="color:#a4480a;background:#fff1e6">${rotaTxt(o)}</span>` : ''}</div>
     </div><div class="val"><div class="v">${brl(o.s === 'DEV' ? o.vd : o.vv)}</div><div class="ar">${o.it.length} itens ▾</div></div></div>
     <div class="body">
       <div class="info">
@@ -185,14 +187,43 @@ function card(o, i) {
       <div class="tot"><span>Total · ${qf(tq)} un.</span><span>${brl(o.vv)}</span></div>
     </div></div>`;
 }
+
+const atCor = (n) => n > 60 ? '#6e130d' : n > 30 ? '#c8241a' : n > 15 ? '#dd5b50' : '#ea8a82';
+function cobMsg(c) {
+  const lin = c.t.filter((t) => t[5] > 0).slice(0, 12).map((t) => `• NF ${t[0]}${t[1] && t[1] !== '01' ? '/' + t[1] : ''} – venc. ${day(t[2])} – ${brl(t[3])}`).join('\n');
+  return `Olá, ${tc(c.cn.replace(/^\d+\s*·\s*/, ''))}! Tudo bem?\nConsta em aberto em nosso sistema:\n${lin}\nTotal vencido: ${brl(c.venc)}\nPosso te enviar a 2ª via do boleto ou o PIX para pagamento?`;
+}
+function cobCard(c, i) {
+  const tel = (c.tel || '').replace(/\D/g, '');
+  return `<div class="card" style="--sc:${c.venc ? atCor(c.at) : 'var(--line)'}">
+    <div class="ch"><div class="main"><div class="cn">${esc(tc(c.cn))}</div><div class="cl">${esc(c.cid || '')}</div>
+      <div class="tags">${c.venc ? `<span class="tag" style="color:#fff;background:${atCor(c.at)}">${c.at} dias de atraso</span>` : `<span class="tag" style="color:#0e7c86;background:#e0f2f3">vence ${dayW(c.prox)}</span>`}${(c.fl || []).map((f) => `<span class="tag" style="color:#9c1b13;background:#fde8e6">${esc(f)}</span>`).join('')}</div></div>
+      <div class="val"><div class="v" style="color:${c.venc ? '#c8241a' : 'inherit'}">${brl(c.venc || c.ab)}</div><div class="ar">${c.t.length} título${c.t.length > 1 ? 's' : ''} ▾</div></div></div>
+    <div class="body">
+      ${c.t.map(([nf, pa, ve, v, fo, at]) => `<div class="it"><div class="n">NF ${esc(nf)}${pa ? ' / ' + esc(pa) : ''}<div class="u">venc. ${dayW(ve)} · ${esc(fo)}</div>${at ? `<div class="dvl">${at} dias de atraso</div>` : ''}</div><div class="t">${brl(v)}</div></div>`).join('')}
+      <div class="tot"><span>Vencido</span><span>${brl(c.venc)}</span></div>
+      ${tel.length >= 10 ? `<a class="wab" target="_blank" rel="noopener" href="https://wa.me/55${tel}?text=${encodeURIComponent(cobMsg(c))}">Cobrar pelo WhatsApp</a>` : ''}
+    </div></div>`;
+}
 function render() {
   const os = DATA.o.map((o, i) => [o, i]).filter(([o]) => !Q || (o.cn + ' ' + o.cid + ' ' + o.bai + ' ' + o.id).toUpperCase().includes(Q));
   const cnt = (keys) => os.filter(([o]) => keys.includes(o.s)).length;
+  const tit = (DATA.tit || []).filter((c) => !Q || (c.cn + ' ' + c.cid).toUpperCase().includes(Q));
+  const titV = tit.filter((c) => c.venc > 0);
   document.getElementById('chips').innerHTML = `<button class="chip ${F === 'all' ? 'on' : ''}" data-f="all">Todos<b>${os.length}</b></button>` +
+    (titV.length ? `<button class="chip ${F === 'COB' ? 'on' : ''}" data-f="COB" style="${F === 'COB' ? '' : 'color:#c8241a;border-color:#f3c3bf'}">Cobrança<b>${titV.length}</b></button>` : '') +
     GROUPS.map(([k, l, sl, keys]) => cnt(keys) ? `<button class="chip ${F === k ? 'on' : ''}" data-f="${k}">${sl}<b>${cnt(keys)}</b></button>` : '').join('');
+  if (F === 'COB') {
+    const vt = titV.reduce((t, c) => t + c.venc, 0);
+    document.getElementById('main').innerHTML = `<div class="sum"><div class="k"><b style="color:#c8241a">${brl(vt)}</b><span>vencido · ${titV.length} cliente${titV.length > 1 ? 's' : ''}</span></div><div class="lg2" style="margin-top:6px">Contas a receber de ${dayW(DATA.tD || DATA.D)}. Toque no cliente para ver os títulos e cobrar.</div></div>` +
+      `<div class="sec">Títulos vencidos · ${titV.length}</div>` + titV.map(cobCard).join('') +
+      (tit.length > titV.length ? `<div class="sec">Vencem nos próximos 7 dias · ${tit.length - titV.length}</div>` + tit.filter((c) => !c.venc).map(cobCard).join('') : '') +
+      `<div class="foot">Posição do contas a receber de ${dayW(DATA.tD || DATA.D)}</div>`;
+    return;
+  }
   const tv = os.reduce((t, [o]) => t + (o.s === 'DEV' ? 0 : o.vv), 0);
   const seg = GROUPS.map(([k, l, sl, keys]) => [k, sl, cnt(keys), ST[keys[0]]]).filter((x) => x[2]);
-  let h = `<div class="sum"><div class="k"><b>${os.length}</b><span>pedidos · ${brl(tv)}</span></div><div class="bar2">${seg.map(([k, sl, n, st]) => `<i style="flex:${n};background:${st[3] || st[1]}"></i>`).join('')}</div><div class="lg2">${seg.map(([k, sl, n, st]) => `<span><i style="background:${st[3] || st[1]}"></i>${sl} ${n}</span>`).join('')}</div></div>`;
+  let h = (F === 'all' && titV.length ? `<button class="cobb" data-f="COB"><span><b>${titV.length}</b> cliente${titV.length > 1 ? 's' : ''} para cobrar</span><span>${brl(titV.reduce((t, c) => t + c.venc, 0))} vencido ›</span></button>` : '') + `<div class="sum"><div class="k"><b>${os.length}</b><span>pedidos · ${brl(tv)}</span></div><div class="bar2">${seg.map(([k, sl, n, st]) => `<i style="flex:${n};background:${st[3] || st[1]}"></i>`).join('')}</div><div class="lg2">${seg.map(([k, sl, n, st]) => `<span><i style="background:${st[3] || st[1]}"></i>${sl} ${n}</span>`).join('')}</div></div>`;
   for (const [k, l, sl, keys] of GROUPS) {
     if (F !== 'all' && F !== k) continue;
     const list = os.filter(([o]) => keys.includes(o.s)).sort((a, b) => (b[0].dias - a[0].dias) || a[0].cn.localeCompare(b[0].cn));
@@ -202,7 +233,7 @@ function render() {
   document.getElementById('main').innerHTML = (h || '<div class="empty">Nenhum pedido encontrado.</div>') +
     `<div class="foot">Posição de ${dayW(DATA.D)} · toque no cliente para ver os itens</div>`;
 }
-document.getElementById('main').addEventListener('click', (e) => { const h = e.target.closest('.ch'); if (h) h.parentElement.classList.toggle('open'); });
+document.getElementById('main').addEventListener('click', (e) => { const b = e.target.closest('.cobb'); if (b) { F = 'COB'; render(); window.scrollTo(0, 0); return; } const h = e.target.closest('.ch'); if (h) h.parentElement.classList.toggle('open'); });
 document.getElementById('chips').addEventListener('click', (e) => { const c = e.target.closest('[data-f]'); if (c) { F = c.dataset.f; render(); } });
 document.getElementById('q').addEventListener('input', (e) => { Q = e.target.value.trim().toUpperCase(); render(); });
 async function sha(txt) { return new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt))); }
